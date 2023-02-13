@@ -301,7 +301,10 @@ class TicketWindow(QMainWindow):
         label_discord_id = QLabel("Client Discord ID:")
         label_message = QLabel("Client Message:")
         submit_button = QPushButton("Submit")
-        submit_button.clicked.connect(self.submit)
+        try:
+            submit_button.clicked.connect(self.submit)
+        except Exception as e:
+            print(e)
         clear_credentials_button = QPushButton("Clear credentials")
         clear_credentials_button.clicked.connect(self.clear_credentials)
 
@@ -326,6 +329,9 @@ class TicketWindow(QMainWindow):
             if send_email(self.app_password, self.email_account_sender, client_discord_id, client_message):
                 QMessageBox.information(self, "Success",
                                         "Email sent successfully. Ticket will be created automatically")
+                # set the input text fields empty for faster re-use
+                self.client_message.setPlainText("")
+                self.client_discord_id.clear()
             else:
                 # email of someone in charge of keeping this in working order
                 QMessageBox.warning(self, "Warning",
