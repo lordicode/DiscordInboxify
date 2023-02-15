@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, \
-    QWidget, QMessageBox, QTextEdit
+    QWidget, QMessageBox, QTextEdit, QPlainTextEdit, QDesktopWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
@@ -293,20 +293,23 @@ class TicketWindow(QMainWindow):
         self.email_account_sender = email_account_sender_ticket_window
 
         self.client_discord_id = QLineEdit()
-        # QTextEdit is multiline, which may be required for Discord messages
-        self.client_message = QTextEdit()
+        # QTextPlainEdit is multiline, which may be required for Discord messages. additionally it parses only plain
+        # getting rid of unnecessary elements
+        self.client_message = QPlainTextEdit()
         self.client_discord_id.setFixedHeight(28)
-        self.client_message.setFixedHeight(80)
-
+        self.client_message.setMinimumSize(500, 150)
+        desktop = QDesktopWidget()
+        self.client_message.setMaximumSize(desktop.availableGeometry().width(), 660)
+        self.client_message.lineWrapMode()
         label_discord_id = QLabel("Client Discord ID:")
         label_message = QLabel("Client Message:")
         submit_button = QPushButton("Submit")
+
+        clear_credentials_button = QPushButton("Clear credentials")
         try:
             submit_button.clicked.connect(self.submit)
         except Exception as e:
             print(e)
-        clear_credentials_button = QPushButton("Clear credentials")
-        clear_credentials_button.clicked.connect(self.clear_credentials)
 
         layout = QVBoxLayout()
         layout.addWidget(label_discord_id)
@@ -325,18 +328,17 @@ class TicketWindow(QMainWindow):
         pattern_discord_id = re.compile(r'.*#.*')
         client_discord_id = self.client_discord_id.text()
         client_message = self.client_message.toPlainText()
+        self.client_message.setPlainText("")
+        self.client_discord_id.clear()
         if client_message and pattern_discord_id.match(client_discord_id):
             if send_email(self.app_password, self.email_account_sender, client_discord_id, client_message):
                 QMessageBox.information(self, "Success",
                                         "Email sent successfully. Ticket will be created automatically")
-                # set the input text fields empty for faster re-use
-                self.client_message.setPlainText("")
-                self.client_discord_id.clear()
             else:
                 # email of someone in charge of keeping this in working order
                 QMessageBox.warning(self, "Warning",
                                     "Something went wrong, if you cannot figure out what happened, please contact:\n"
-                                    "someone@dot.com")
+                                    "klavdii.chopats@oxygen-forensic.com")
         else:
             QMessageBox.warning(self, "Warning",
                                 "Something went wrong, either Discord ID is incorrect or message is empty")
@@ -348,7 +350,6 @@ class TicketWindow(QMainWindow):
             self.close()
         else:
             QMessageBox.warning(self, "Warning", "No credentials found.")
-
 
 # launches the window if the script is run directly
 if __name__ == '__main__':
